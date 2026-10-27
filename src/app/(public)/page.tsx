@@ -1,0 +1,19 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { connection } from "next/server";
+import { AuctionCard } from "@/components/auctions/auction-card";
+import { listAuctions } from "@/features/auctions/queries";
+import { AuctionStatus } from "../../../generated/prisma/enums";
+import { LocaleText } from "@/components/i18n/locale-text";
+
+async function FeaturedAuctions() {
+  await connection();
+  const result = await listAuctions({ status: AuctionStatus.ACTIVE, pageSize: 3 });
+  return result.items.length ? <div className="auction-grid">{result.items.map((auction) => <AuctionCard key={auction.id} auction={auction} />)}</div> : <div className="empty-state"><p><LocaleText es="Aún no hay subastas activas. Sé la primera persona en publicar una pieza." en="There are no active auctions yet. Be the first to list a collectible."/></p><Link className="button" href="/register"><LocaleText es="Crear cuenta" en="Create account"/></Link></div>;
+}
+
+export default function HomePage() {
+  return <main><section className="hero"><div className="hero-copy"><span className="eyebrow"><LocaleText es="EL MERCADO DE LOS COLECCIONISTAS" en="THE COLLECTORS' MARKET"/></span><h1><LocaleText es="Piezas únicas." en="Rare finds."/><br/><em><LocaleText es="Ofertas reales." en="Real bids."/></em></h1><p><LocaleText es="Descubre cartas, relojes, vinilos y objetos de colección en una comunidad hecha para quienes valoran cada historia." en="Discover cards, watches, vinyl and collectibles in a community built for people who value every story."/></p><div className="hero-actions"><Link className="button" href="/auctions"><LocaleText es="Explorar subastas" en="Explore auctions"/> <span aria-hidden>↗</span></Link><Link className="text-link" href="/register"><LocaleText es="Empieza a vender" en="Start selling"/> <span aria-hidden>→</span></Link></div><div className="hero-note"><span className="live-dot"/> <LocaleText es="Nuevas piezas cada semana" en="New finds every week"/></div></div><div className="hero-art"><div className="hero-orbit orbit-one"/><div className="hero-orbit orbit-two"/><div className="hero-record"><span>BH<br/><small>COLLECTOR<br/>EDITION</small></span></div><div className="hero-caption"><span><LocaleText es="01 / PIEZAS CON HISTORIA" en="01 / OBJECTS WITH A STORY"/></span><strong><LocaleText es="Tu próxima obsesión está aquí." en="Your next obsession is waiting."/></strong></div></div><div className="hero-index">BOGOTÁ · EN LÍNEA DESDE 2026</div></section>
+    <section className="section-block"><div className="section-heading"><div><span className="eyebrow"><LocaleText es="EL MERCADO SE MUEVE" en="THE MARKET IS MOVING"/></span><h2><LocaleText es="Subastas en curso" en="Live auctions"/></h2></div><Link className="text-link" href="/auctions"><LocaleText es="Ver todas" en="See all"/> <span aria-hidden>→</span></Link></div><Suspense fallback={<div className="loading-grid"><div/><div/><div/></div>}><FeaturedAuctions/></Suspense></section>
+    <section className="how-section"><div><span className="eyebrow"><LocaleText es="ASÍ DE FÁCIL" en="THREE SIMPLE STEPS"/></span><h2><LocaleText es="La próxima gran pieza puede ser tuya." en="Your next great find could be yours."/></h2></div><div className="how-grid"><article><span>01</span><h3><LocaleText es="Explora" en="Explore"/></h3><p><LocaleText es="Encuentra objetos especiales entre categorías seleccionadas." en="Find special objects across curated categories."/></p></article><article><span>02</span><h3><LocaleText es="Participa" en="Take part"/></h3><p><LocaleText es="Haz tu oferta y sigue la subasta en tiempo real." en="Place a bid and follow the auction in real time."/></p></article><article><span>03</span><h3><LocaleText es="Colecciona" en="Collect"/></h3><p><LocaleText es="Gana y dale un nuevo lugar a una pieza con historia." en="Win and give a piece with a story a new home."/></p></article></div></section></main>;
+}

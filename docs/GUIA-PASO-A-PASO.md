@@ -1,158 +1,186 @@
 # Guía paso a paso para construir un proyecto fullstack
 
-Esta guía sirve como método reutilizable para proyectos fullstack con Next.js, TypeScript, PostgreSQL y Prisma. BidHub se usa como ejemplo para que cada paso tenga archivos y comandos concretos.
-
-La idea es completar y verificar una etapa antes de pasar a la siguiente. En cada etapa:
-
-1. Aclara qué resultado se busca.
-2. Identifica los archivos que participan.
-3. Implementa una parte pequeña y entiende por qué existe.
-4. Ejecuta la verificación indicada.
-5. Anota el resultado y los pendientes.
-
-No marques una etapa como completa solo porque el código ya está escrito: debe pasar la verificación correspondiente.
+Esta guía es un procedimiento reutilizable para que puedas repetir por tu cuenta un proyecto con Next.js, TypeScript, PostgreSQL y Prisma. La bitácora de BidHub muestra qué se hizo y en qué archivos. Úsala como cuaderno: reproduce una etapa, corre su comprobación y anota el resultado antes de pasar a la siguiente.
 
 ## Método reusable
 
-### 1. Entender el problema
+### 1. Lee el encargo y convierte frases en reglas
 
-- Lee el documento de requisitos completo antes de programar.
-- Separa requisitos de negocio, seguridad, tecnología, interfaz y entrega.
-- Convierte cada regla en una condición comprobable. Por ejemplo: «el cierre debe estar entre 1 hora y 7 días» se convierte en una validación del backend y en un caso verificable.
-- Anota dudas, decisiones técnicas y lo que queda fuera del alcance.
+1. Lee el documento completo antes de tocar archivos.
+2. Agrupa cada requisito en negocio, seguridad, páginas, API, datos, despliegue y entregables.
+3. Convierte cada frase en una condición verificable. Ejemplo: «no puede cerrar en menos de una hora» significa comprobar el tiempo dentro del servicio de backend, no solamente agregar `min` a un input.
+4. Distingue lo que puede verificar el código localmente de lo que necesita cuenta, base de datos o aprobación externa.
 
-**Resultado:** un alcance claro y una lista priorizada de funcionalidades.
+**Resultado esperado:** una lista de alcance y una primera definición de terminado.
 
-### 2. Inspeccionar el proyecto existente
+### 2. Inspecciona antes de editar
 
-- Revisa `package.json`, el árbol de `src/`, archivos de configuración y Git.
-- Identifica qué ya existe y qué está vacío antes de reemplazar archivos.
-- Lee `AGENTS.md` y cualquier instrucción local.
-- Si el proyecto usa una versión nueva o poco conocida de un framework, consulta la documentación instalada en el repositorio antes de escribir código.
+1. Lee `AGENTS.md`, la guía del framework instalado y los archivos `package.json`, configuración, esquema, rutas y Git.
+2. Comprueba la versión exacta de Next y Prisma. Las APIs nuevas pueden romper las convenciones de versiones anteriores.
+3. Revisa si ya existe arquitectura o código que se deba conservar. No confundas archivo vacío con permiso para borrar el trabajo del usuario.
+4. Escribe una lista de archivos pendientes antes de empezar.
 
-**Resultado:** un inventario de lo reutilizable, lo pendiente y las restricciones.
+**Resultado esperado:** mapa de restricciones, piezas existentes y cambios por hacer.
 
-### 3. Diseñar el dominio y la arquitectura
+### 3. Dibuja el dominio y las rutas
 
-- Identifica entidades, atributos, relaciones y quién puede hacer cada acción.
-- Dibuja o escribe las relaciones antes de escoger tablas.
-- Decide qué reglas deben cumplirse en la base de datos y cuáles en servicios del backend.
-- Organiza las páginas por rutas y el código de dominio por features.
-- Define los contratos de entrada y salida de las API antes de conectar la interfaz.
+1. Escribe entidades y relaciones (por ejemplo, usuario → subastas → ofertas).
+2. Decide qué rol puede ejecutar cada acción.
+3. Diseña la URL de páginas y API. Usa route groups de Next para organizar páginas sin añadir segmentos a las URLs.
+4. Define los cuerpos JSON y la forma de éxito/error antes de conectar la interfaz.
 
-**Resultado:** un modelo de datos y un mapa de rutas/API que se puedan explicar.
+**Resultado esperado:** esquema de datos y contratos de API que se puedan explicar.
 
-### 4. Preparar herramientas y configuración
+### 4. Prepara herramientas y entorno
 
-- Instala dependencias con versiones explícitas cuando haya cambios importantes entre versiones.
-- Crea el archivo de configuración del ORM y el esquema inicial.
-- Crea `.env.example` sin secretos y agrega `.env` a `.gitignore`.
-- Comprueba que las variables requeridas tengan nombres y propósitos claros.
+1. Instala versiones compatibles y guarda `package-lock.json`.
+2. Configura Prisma y valida el schema antes de conectar a datos reales.
+3. Mantén `.env` fuera de Git y deja en `.env.example` solo nombres y valores vacíos/default no secretos.
+4. Separa URL runtime de URL de migraciones si el proveedor ofrece poolers distintos.
 
-**Resultado:** herramientas instaladas y configuración local segura, sin secretos en Git.
+**Resultado esperado:** aplicación compilable y secretos fuera del repositorio.
 
-### 5. Implementar persistencia
+### 5. Modela y migra la base
 
-- Define modelos, relaciones, restricciones e índices.
-- Valida y formatea el esquema antes de conectarte a una base real.
-- Crea migraciones con nombres que expliquen el cambio.
-- Ejecuta las migraciones en una base de desarrollo.
-- Crea un seed repetible con datos ficticios y credenciales documentadas.
+1. Define modelos, relaciones, claves únicas e índices a partir del dominio.
+2. Ejecuta `npx prisma format`, `npx prisma validate` y `npx prisma generate`.
+3. En una base de desarrollo crea una migración nombrada (`npx prisma migrate dev --name nombre_claro`).
+4. Lee el SQL generado y comprueba que no tenga drops, truncados ni cambios no previstos.
+5. En base compartida/producción aplica migraciones versionadas con `npx prisma migrate deploy`.
+6. Ejecuta el seed de forma repetible. No metas contraseñas reales al código.
 
-**Resultado:** una base creada desde migraciones y datos de ejemplo recreables.
+**Resultado esperado:** esquema recreable desde migraciones y datos de ejemplo seguros.
 
-### 6. Implementar backend por casos de uso
+### 6. Implementa los casos de uso del backend
 
-Para cada feature:
+Para cada endpoint:
 
-1. Define el esquema de entrada con Zod.
-2. Verifica sesión y permisos en el handler, aunque exista protección de páginas.
-3. Implementa una función de dominio con una responsabilidad clara.
-4. Accede a la base por Prisma.
-5. Devuelve una respuesta consistente y códigos HTTP apropiados.
-6. Comprueba errores de validación, permisos, datos inexistentes y conflictos.
+1. Valida parámetros y JSON de entrada con Zod.
+2. Comprueba autenticación y rol dentro del handler; el proxy solo mejora navegación.
+3. Coloca la regla de negocio en un servicio del dominio que también pueda llamarse desde otra interfaz.
+4. Aplica transacciones/locks cuando dos operaciones puedan competir.
+5. Evita filtrar datos privados en respuestas públicas.
+6. Devuelve un formato uniforme y el código HTTP adecuado.
+7. Cubre por lo menos una regla pura con una prueba.
 
-Implementa primero los flujos críticos de negocio. Para operaciones concurrentes, piensa qué debe ocurrir si dos solicitudes leen y modifican el mismo registro al tiempo.
+**Resultado esperado:** llamar a la API directamente no permite saltarse las reglas de la pantalla.
 
-**Resultado:** APIs que cumplen las reglas aunque se llamen sin usar la interfaz.
+### 7. Construye la interfaz por flujos completos
 
-### 7. Implementar interfaz y navegación
+Implementa una acción cada vez: estados inicial, cargando, éxito, vacío y error. Conecta formularios a la API y muestra el error que responde el backend. Revisa autorización, navegación móvil, etiquetas accesibles e imágenes. Para datos del usuario usa CSR; para catálogos/detalles usa SSR/streaming detrás de `Suspense`; deja una carcasa estática para páginas que deban prerenderizarse.
 
-- Crea layouts y componentes compartidos antes de duplicarlos en cada página.
-- Conecta un flujo completo a la vez: formulario, petición, respuesta, error y estado de carga.
-- Aplica la estrategia de renderizado adecuada a los datos de cada página.
-- Revisa accesibilidad básica, diseño móvil e imágenes.
-- Agrega estados vacíos, errores y confirmaciones para las acciones importantes.
+**Resultado esperado:** flujos de principio a fin, no solamente componentes visuales.
 
-**Resultado:** flujos utilizables de principio a fin, no solo pantallas estáticas.
+### 8. Revisa y entrega
 
-### 8. Seguridad, calidad y entrega
+1. Ejecuta generación de tipos, TypeScript, lint, pruebas y build.
+2. Prueba el README desde un checkout limpio si hay base de desarrollo disponible.
+3. Comprueba que `.env` y credenciales no entren a `git status`.
+4. Actualiza la guía con comandos reales y pendientes.
+5. Despliega solo con acceso a cuentas y variables necesarias; anota la URL real, sin inventarla.
 
-- Revisa autenticación, autorización, validaciones, privacidad y manejo de secretos.
-- Ejecuta lint, chequeo de tipos, build y las pruebas que correspondan.
-- Comprueba el proyecto desde una instalación limpia siguiendo el README.
-- Prepara Docker/CI si forman parte del alcance.
-- Despliega primero la base y luego la aplicación; valida los flujos en el entorno desplegado.
-- Actualiza el README con variables, comandos, seed, scripts, estructura y URL real.
+**Resultado esperado:** otra persona puede entender qué hacer, cómo comprobarlo y qué falta por cuenta externa.
 
-**Resultado:** otra persona puede instalar, ejecutar y verificar el proyecto siguiendo la documentación.
+## BidHub: recorrido concreto que se siguió
 
-## Bitácora de BidHub
+### A. Requisitos → arquitectura
 
-Estados: **Completo** significa ejecutado y comprobado; **En curso** significa que ya empezó; **Pendiente** significa que todavía no se implementa.
+- Requisitos completos: `docs/.md`.
+- Arquitectura del usuario: `docs/Arquitectura_por_Features.md`.
+- El dominio principal es `User`, `Category`, `Auction`, `Bid` y `RefreshToken`. Los estados finales se derivan al consultar usando `closesAt`, cantidad de ofertas y cancelación guardada.
+- La decisión de privacidad es enviar `bidderAlias`, monto y fecha en el historial público; el correo y nombre completo nunca salen.
 
-| Etapa | Estado | Qué incluye |
-|---|---|---|
-| 1. Leer requisitos e inspeccionar arquitectura | Completo | Leído `docs/.md`; revisadas las instrucciones y la estructura existente por features. |
-| 2. Preparar Prisma 7 y Zod | Completo | Dependencias instaladas; `prisma/schema.prisma` y `prisma7.config.ts` creados por `prisma init`. |
-| 3. Modelar datos y validar esquema | Completo | Modelos de usuarios, sesiones, categorías, subastas y ofertas escritos, formateados y validados con `npx prisma validate`. |
-| 4. Conectar PostgreSQL y crear migración | Completo | `DATABASE_URL` configurado localmente; esquema validado; migración `init` aplicada y tablas visibles en Supabase. |
-| 5. Implementar autenticación | Pendiente | Registro, login, refresh, logout, hash de contraseñas y cookies seguras. |
-| 6. Implementar backend por features | En curso | `GET /api/categories` consulta PostgreSQL; esquemas Zod de registro/login creados y chequeo de tipos completado. |
-| 7. Completar páginas y layouts | En curso | Rutas tienen componentes provisionales y pasan el chequeo de tipos; el contenido funcional y los layouts siguen pendientes. |
-| 8. Agregar idiomas y detalles de UX | Pendiente | Español/inglés, selector, cuenta regresiva, responsive e imágenes. |
-| 9. Seed, documentación y contenedores | Pendiente | Datos de ejemplo, `.env.example`, README, Dockerfile y opcionalmente Compose/CI. |
-| 10. Verificar y desplegar | Pendiente | Calidad local, ejecución desde cero, Supabase y Vercel. |
+### B. Configuración → persistencia
 
-### Paso actual: preparar autenticación
+Archivos: `prisma/schema.prisma`, `prisma7.config.ts`, `src/lib/db.ts`, `.env.example`.
 
-Archivos de referencia: `src/features/auth/schemas.ts` para validar registro/login y `src/lib/db.ts` para acceso a PostgreSQL.
-
-La consulta `GET /api/categories` ya se probó en `http://localhost:3000/api/categories` y respondió `{ "data": [] }`, confirmando que Next.js puede consultar la base vacía.
-
-Las páginas `page.tsx` que se crearon como estructura necesitan exportar un componente React por defecto. Los componentes provisionales sirven para validar el sistema de rutas; se reemplazarán por las pantallas funcionales en la etapa de interfaz.
-
-### Referencia de conexión PostgreSQL
-
-Archivo de configuración: `prisma7.config.ts`. Lee `DATABASE_URL` desde `.env`.
-
-En Supabase, abrir el proyecto y seleccionar **Connect → Session pooler**. Para desarrollo local y migraciones se usa la cadena de sesión (puerto `5432`), especialmente si la red local no tiene IPv6. Guardarla en `.env` como `DATABASE_URL`, sin compartirla ni copiarla en `.env.example`. Validar el esquema con `npx prisma validate` antes de crear una migración. Crear/aplicar la migración de desarrollo con `npx prisma migrate dev --name init` y generar el cliente explícitamente con `npx prisma generate`.
-
-Cuando la app se despliegue en Vercel, revisar la conexión de runtime: las funciones serverless usan el pooler de transacciones (puerto `6543`); Prisma recomienda separar esa URL de la URL usada por migraciones. Se documentará al preparar el despliegue.
-
-### Referencia del esquema de Prisma
-
-Archivo de trabajo: `prisma/schema.prisma`.
-
-Al definir cada modelo, pregunta:
-
-- ¿Qué representa y qué datos necesita?
-- ¿Qué campos deben ser únicos o no nulos?
-- ¿Qué relaciones tiene y qué pasa al borrar el registro relacionado?
-- ¿Qué consultas frecuentes necesitan índices?
-- ¿Es información sensible que no debe salir en una respuesta pública?
-
-Después de editar el esquema, ejecutar:
+Después de editar schema, el orden de verificación es:
 
 ```bash
 npx prisma format
+npx prisma validate
+npx prisma generate
 ```
 
-El formato correcto no significa que ya se hayan creado tablas. La siguiente etapa será configurar PostgreSQL y crear una migración. No uses `db push` como sustituto de migraciones en este proyecto.
+Para desarrollo, crear migración con `npm run db:migrate -- --name nombre_descriptivo`. Revisar `prisma/migrations/<timestamp>_nombre/migration.sql`. Para desplegar migraciones revisadas: `npm run db:migrate:deploy`. Para datos ficticios: `npm run db:seed`.
 
-## Notas de decisiones
+La CLI detecta la configuración en `prisma7.config.ts`; su propiedad `migrations.seed` indica `tsx prisma/seed.ts`. Prisma 7 no toma la URL desde el bloque `datasource` de `schema.prisma`; este proyecto la lee en el archivo de configuración.
 
-- BidHub usa Next.js 16, TypeScript, PostgreSQL, Prisma ORM 7 y Zod.
-- Prisma ORM 7 requiere configurar la URL de conexión en su archivo de configuración; este repositorio generó `prisma7.config.ts`.
-- Los tokens de refresh se guardan como hash en la base de datos; las contraseñas también se guardan hasheadas.
-- Esta guía se actualizará conforme se completen y verifiquen las etapas; los pasos pendientes no son instrucciones para ejecutar todavía.
+### C. Backend por feature
+
+| Área | Archivos principales | Qué aprender de este ejemplo |
+|---|---|---|
+| Autenticación | `src/features/auth/schemas.ts`, `src/lib/password-core.ts`, `src/lib/auth.ts`, `src/app/api/auth/*` | Validar credenciales, hashear, firmar tokens, guardar hash del refresh, rotar/revocar y fijar cookies httpOnly. |
+| Autorización | `src/lib/authorization.ts`, `proxy.ts` | El proxy filtra navegación; cada route handler vuelve a comprobar sesión/rol con datos actuales. |
+| Subastas | `src/features/auctions/schemas.ts`, `domain.ts`, `service.ts`, `queries.ts` | Separar forma de entrada, reglas puras, operaciones transaccionales y lectura/serialización. |
+| Ofertas | `src/app/api/auctions/[id]/bids/route.ts`, `src/features/auctions/service.ts` | Lock de fila, verificación de mínimo, no auto-oferta, idempotencia y extensión antipuja de último segundo. |
+| Categorías | `src/features/categories/schemas.ts`, `src/app/api/categories/*` | Rechazar borrado cuando la relación todavía se usa. |
+| Paneles | `src/features/dashboard/*`, `src/features/admin/*` | Leer datos propios mediante endpoints protegidos; exigir motivo para moderación. |
+
+### D. Interfaz y agrupación de rutas
+
+| Grupo | URLs visibles | Archivos |
+|---|---|---|
+| `(public)` | `/`, `/auctions`, `/auctions/[id]` | `src/app/(public)`; navbar/footer, tarjetas, filtros, detalle, historial y cuenta regresiva cliente. |
+| `(auth)` | `/login`, `/register` | `src/app/(auth)` y `src/components/forms/auth-form.tsx`. |
+| `(private)` | `/my-auctions`, `/my-bids`, `/auctions/new`, `/auctions/[id]/edit` | `src/app/(private)` y `src/features/dashboard`, `src/features/auctions/auction-form.tsx`. |
+| `(admin)` | `/admin/auctions`, `/admin/categories` | `src/app/(admin)` y `src/features/admin`. |
+
+`src/app/layout.tsx` es el root layout. La home conserva un shell prerenderizado y deja los datos de subastas en streaming bajo `Suspense`; catálogo y detalle transmiten datos de base; dashboards consultan la API desde el cliente. `next/image` usa una ilustración local como fallback en `public/items/collectible.svg`.
+
+### E. Reglas de negocio y sus comprobaciones
+
+1. Cierre 1h–7d, máximo cinco subastas activas y cambios permitidos: `src/features/auctions/service.ts`.
+2. No pujar por cuenta propia, mínimo inicial/incremento, usuario líder no repite, bloqueo y extensión de cinco minutos: `placeBid` en ese mismo servicio.
+3. Estado activo/cerrada/desierta/cancelada: `deriveAuctionStatus` en `domain.ts`.
+4. Historial oculta identidad: `maskBidder` en `queries.ts`.
+5. El usuario solo ve sus propias ofertas: `GET /api/me/bids` filtra con el `bidderId` derivado de la sesión.
+6. Pruebas de estado y anti-sniping: `src/features/auctions/domain.test.ts`, ejecutadas con `npm test`.
+
+### F. Comandos que se ejecutaron para revisar el código
+
+```bash
+npx next typegen
+npx tsc --noEmit
+npm run lint
+npm test
+npm run build
+npx prisma validate
+npx prisma generate
+```
+
+En este entorno, `npm test` falló dentro del sandbox con `uv_os_get_passwd returned ENOMEM`; al ejecutarlo con permisos ampliados pasó con 5/5. El build de Next 16 exige mover acceso a `params`, datos de base y tiempo actual bajo `Suspense`/`connection()` cuando Cache Components está activo. Si el prerender avisa de datos uncached, revisa dónde se resuelve la promesa antes de desactivar el cache global.
+
+### G. Seed, variables y contenedor
+
+- Seed: `prisma/seed.ts`. Crea/actualiza un administrador, usuario demo, cinco categorías y cuatro subastas con estados representativos; usa `ADMIN_PASSWORD` y `DEMO_USER_PASSWORD` del entorno, de mínimo 12 caracteres.
+- Variables: copia `.env.example` a `.env`. `DATABASE_URL` se usa en runtime; `DIRECT_URL` para operaciones CLI si Supabase separa pooler transaccional y de sesión.
+- Entrega: `README.md`, `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.github/workflows/ci.yml`.
+- Docker asume una base externa. Primero se configura `.env` y se aplica migración/seed; luego `docker compose build` y `docker compose up -d`.
+
+## Bitácora de BidHub al 26 de octubre de 2026
+
+| Etapa | Estado | Evidencia |
+|---|---|---|
+| Leer requisitos e inspeccionar repo | Completo | `docs/.md`, arquitectura por features y `AGENTS.md` leídos. Se consultó documentación local de Next 16 y Prisma 7. |
+| Preparar herramientas | Completo | Next 16.4.3, Prisma 7.10.1, TypeScript, Zod, jose, tsx; `.env.example` y configuración CLI. |
+| Modelar y validar datos | Completo en código | Esquema validado y Prisma Client generado. |
+| Migración inicial | Aplicada previamente | El usuario mostró en Supabase la fila `init` en `_prisma_migrations` y las tablas. |
+| Migración de seguimiento | Preparada, falta aplicar | `prisma/migrations/20261026160000_auth_audit_and_rate_limit/migration.sql`. Añade `Auction.cancelledById`, tabla e índice de rate limit, activa RLS en seis tablas. El revisor automático bloqueó aplicarla directamente a Supabase; primero se debe revisar el plan/SQL y confirmar el entorno destino. |
+| Auth y APIs | Implementado en código; DB pendiente de migración | Hash scrypt, access/refresh, cookies, registro/login/refresh/logout/me; endpoints de subastas, ofertas, categorías, panel y admin. El rate limit necesita la tabla nueva. |
+| UI por route groups | Implementado | Home, catálogo, detalle, auth, paneles, forms, administración y cuenta regresiva. `next/image`, selector de idioma y estilos adaptables. |
+| Seed, README, Docker y CI | Implementado | Archivos `prisma/seed.ts`, `README.md`, `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`. |
+| Chequeo estático | Pasa | `npx tsc --noEmit`, `npm run lint`, `npx prisma validate`, `npx prisma generate`. |
+| Prueba de regla | Pasa | `npm test`: cinco casos, 5 aprobados. Requirió correr fuera del sandbox por fallo de runtime. |
+| Build de producción | Pasa | `npm run build`; home/catálogo/detalle muestran shell prerenderizado con contenido dinámico en streaming. |
+| Migrar DB + seed real | Pendiente de autorización/entorno | No se ejecuta sobre Supabase hasta revisión de la migración de seguimiento. No se intentó resetear ni borrar datos. |
+| Despliegue de Vercel | Pendiente de conexión | No hay URL real conectada en el repo. El README explica variables y orden; no se inventó un dominio. |
+| Push convencional | Al cerrar esta entrega | Se suben cambios a `main` con mensaje Conventional Commit cuando se complete el chequeo final. |
+
+### Qué revisar antes de seguir en la base real
+
+La migración de seguimiento solo añade columnas, constraint, tabla e índices y ejecuta `ENABLE ROW LEVEL SECURITY`; no contiene `DROP`, `TRUNCATE` ni `DELETE`. El pooler de Supabase debe conectar con una cuenta de servidor con permisos para alterar tablas. Una vez aprobada y aplicada en el entorno correcto, vuelve a ejecutar `npm run db:generate`, `npm run db:seed` y comprueba login, rate limit, cancelación y creación de ofertas con dos cuentas distintas.
+
+### Entrega y aprendizaje
+
+Para repetir el proyecto, usa primero `README.md` como receta de ejecución y esta guía como explicación de decisiones y orden de trabajo. Cuando cambies una regla, actualiza en conjunto: esquema Zod, servicio, handler, interfaz si corresponde, prueba de dominio y esta bitácora.

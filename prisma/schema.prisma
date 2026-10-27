@@ -28,9 +28,10 @@ model User {
   createdAt    DateTime @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @db.Timestamptz(6)
 
-  refreshTokens RefreshToken[]
-  auctions      Auction[]      @relation("SellerAuctions")
-  bids          Bid[]
+  refreshTokens     RefreshToken[]
+  auctions          Auction[]      @relation("SellerAuctions")
+  cancelledAuctions Auction[]      @relation("AuctionCancellations")
+  bids              Bid[]
 }
 
 model RefreshToken {
@@ -67,17 +68,20 @@ model Auction {
   status             AuctionStatus @default(ACTIVE)
   cancellationReason String?       @db.Text
   sellerId           String        @db.Uuid
+  cancelledById      String?       @db.Uuid
   categoryId         String        @db.Uuid
   createdAt          DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt          DateTime      @updatedAt @db.Timestamptz(6)
 
-  seller   User     @relation("SellerAuctions", fields: [sellerId], references: [id])
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  bids     Bid[]
+  seller      User     @relation("SellerAuctions", fields: [sellerId], references: [id])
+  cancelledBy User?    @relation("AuctionCancellations", fields: [cancelledById], references: [id], onDelete: SetNull)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  bids        Bid[]
 
   @@index([status, closesAt])
   @@index([sellerId])
   @@index([categoryId])
+  @@index([cancelledById])
 }
 
 model Bid {
@@ -93,4 +97,12 @@ model Bid {
 
   @@index([auctionId, createdAt])
   @@index([bidderId, auctionId])
+}
+
+model RateLimitBucket {
+  key             String   @id
+  hits            Int      @default(1)
+  windowStartedAt DateTime @db.Timestamptz(6)
+
+  @@index([windowStartedAt])
 }

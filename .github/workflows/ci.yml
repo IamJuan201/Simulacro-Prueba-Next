@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/bidhub
+      DIRECT_URL: postgresql://placeholder:placeholder@localhost:5432/bidhub
+      JWT_ACCESS_SECRET: ci-access-secret-value-at-least-thirty-two-bytes-long
+      JWT_REFRESH_SECRET: ci-refresh-secret-value-at-least-thirty-two-bytes-long
+      ACCESS_TOKEN_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 7d
+      ADMIN_EMAIL: admin@bidhub.local
+      ADMIN_PASSWORD: change-this-ci-password
+      DEMO_USER_PASSWORD: change-this-demo-password
+      APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build

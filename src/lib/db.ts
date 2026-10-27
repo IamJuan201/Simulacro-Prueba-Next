@@ -13,7 +13,7 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL no está definida");
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  const adapter = new PrismaPg({ connectionString, max: 1 });
 
   return new PrismaClient({ adapter });
 }
