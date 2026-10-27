@@ -153,7 +153,7 @@ En este entorno, `npm test` falló dentro del sandbox con `uv_os_get_passwd retu
 
 ### G. Seed, variables y contenedor
 
-- Seed: `prisma/seed.ts`. Crea/actualiza un administrador, usuario demo, cinco categorías y cuatro subastas con estados representativos; usa `ADMIN_PASSWORD` y `DEMO_USER_PASSWORD` del entorno, de mínimo 12 caracteres.
+- Seed: `prisma/seed.ts`. Crea/actualiza un administrador, usuario demo, cinco categorías y cuatro subastas con estados representativos; requiere `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DEMO_USER_PASSWORD` en `.env`, con contraseñas de mínimo 12 caracteres. En producción el seed no se completó porque esas tres variables no están configuradas en el `.env` local.
 - Variables: copia `.env.example` a `.env`. `DATABASE_URL` se usa en runtime; `DIRECT_URL` para operaciones CLI si Supabase separa pooler transaccional y de sesión.
 - Entrega: `README.md`, `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.github/workflows/ci.yml`.
 - Docker asume una base externa. Primero se configura `.env` y se aplica migración/seed; luego `docker compose build` y `docker compose up -d`.
@@ -166,20 +166,21 @@ En este entorno, `npm test` falló dentro del sandbox con `uv_os_get_passwd retu
 | Preparar herramientas | Completo | Next 16.4.3, Prisma 7.10.1, TypeScript, Zod, jose, tsx; `.env.example` y configuración CLI. |
 | Modelar y validar datos | Completo en código | Esquema validado y Prisma Client generado. |
 | Migración inicial | Aplicada previamente | El usuario mostró en Supabase la fila `init` en `_prisma_migrations` y las tablas. |
-| Migración de seguimiento | Preparada, falta aplicar | `prisma/migrations/20261026160000_auth_audit_and_rate_limit/migration.sql`. Añade `Auction.cancelledById`, tabla e índice de rate limit, activa RLS en seis tablas. El revisor automático bloqueó aplicarla directamente a Supabase; primero se debe revisar el plan/SQL y confirmar el entorno destino. |
-| Auth y APIs | Implementado en código; DB pendiente de migración | Hash scrypt, access/refresh, cookies, registro/login/refresh/logout/me; endpoints de subastas, ofertas, categorías, panel y admin. El rate limit necesita la tabla nueva. |
+| Migración de seguimiento | Aplicada en Supabase `main` (producción) | `20261026160000_auth_audit_and_rate_limit`: añade `Auction.cancelledById`, tabla e índice de rate limit y activa RLS en seis tablas. `npx prisma migrate deploy` terminó correctamente el 26-10-2026. |
+| Auth y APIs | Implementado; esquema de producción sincronizado | Hash scrypt, access/refresh, cookies, registro/login/refresh/logout/me; endpoints de subastas, ofertas, categorías, panel y admin. La tabla nueva de rate limit ya está disponible. |
 | UI por route groups | Implementado | Home estática, catálogo/detalle con datos al solicitarse, dashboards CSR, auth, forms, administración, cuenta regresiva y selector ES/EN en flujos principales. `next/image` y estilos adaptables. |
 | Seed, README, Docker y CI | Implementado | Archivos `prisma/seed.ts`, `README.md`, `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`. |
 | Chequeo estático | Pasa | `npx tsc --noEmit`, `npm run lint`, `npx prisma validate`, `npx prisma generate`. |
 | Prueba de regla | Pasa | `npm test`: cinco casos, 5 aprobados. Requirió correr fuera del sandbox por fallo de runtime. |
 | Build de producción | Pasa | `npm run build`; home/catálogo/detalle muestran shell prerenderizado con contenido dinámico en streaming. |
-| Migrar DB + seed real | Pendiente de autorización/entorno | No se ejecuta sobre Supabase hasta revisión de la migración de seguimiento. No se intentó resetear ni borrar datos. |
+| Migración DB | Completa | `npx prisma migrate deploy` aplicó la única migración pendiente en Supabase `main`; `migrate status` había confirmado que era la migración esperada. |
+| Seed real | Pendiente de configuración | `npx prisma db seed` se intentó, pero se detuvo antes de escribir datos porque faltan `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DEMO_USER_PASSWORD` en `.env`. Configúralas localmente y vuelve a ejecutar el comando; no compartas contraseñas en el chat. |
 | Despliegue de Vercel | Pendiente de conexión | No hay URL real conectada en el repo. El README explica variables y orden; no se inventó un dominio. |
-| Push convencional | Al cerrar esta entrega | Se suben cambios a `main` con mensaje Conventional Commit cuando se complete el chequeo final. |
+| Push convencional | Completo hasta `e10d390` | Los cambios anteriores están en `origin/main`; la actualización de esta bitácora se enviará con `docs: update production setup status`. |
 
-### Qué revisar antes de seguir en la base real
+### Qué revisar después de sincronizar la base real
 
-La migración de seguimiento solo añade columnas, constraint, tabla e índices y ejecuta `ENABLE ROW LEVEL SECURITY`; no contiene `DROP`, `TRUNCATE` ni `DELETE`. El pooler de Supabase debe conectar con una cuenta de servidor con permisos para alterar tablas. Una vez aprobada y aplicada en el entorno correcto, vuelve a ejecutar `npm run db:generate`, `npm run db:seed` y comprueba login, rate limit, cancelación y creación de ofertas con dos cuentas distintas.
+La migración ya se aplicó en Supabase `main`. Para poblar los datos de demostración, configura las tres variables del seed en `.env` con contraseñas de mínimo 12 caracteres y ejecuta `npx prisma db seed`. Luego comprueba login, rate limit, cancelación y creación de ofertas con dos cuentas distintas.
 
 ### Entrega y aprendizaje
 

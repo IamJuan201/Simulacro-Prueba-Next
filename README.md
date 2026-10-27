@@ -125,9 +125,9 @@ GitHub Actions ejecuta `npm ci`, generación de Prisma Client, lint, TypeScript,
 
 ## Despliegue
 
-La base prevista es Supabase y el runtime es Vercel. Para conectar Vercel: importa este repositorio, configura todas las variables de `.env.example` en Production/Preview, usa el pooler de transacciones en `DATABASE_URL`, el pooler de sesión en `DIRECT_URL`, y aplica migraciones con `npx prisma migrate deploy` desde un entorno controlado antes de publicar. Define `APP_URL` con el dominio asignado por Vercel y verifica registro, refresh, ofertas y panel admin.
+La base es Supabase y el runtime previsto es Vercel. La migración `20261026160000_auth_audit_and_rate_limit` ya se aplicó en Supabase `main` (producción). Para conectar Vercel: importa este repositorio y configura las variables de `.env.example` en Production/Preview; usa el pooler de transacciones en `DATABASE_URL` y el pooler de sesión en `DIRECT_URL`. Define `APP_URL` con el dominio asignado por Vercel y verifica registro, refresh, ofertas y panel admin.
 
-**URL desplegada:** pendiente de conectar el proyecto a una cuenta Vercel y aplicar la migración de seguimiento en Supabase. No se inventa una URL; al completar esa conexión, reemplaza esta línea por la URL real.
+**URL desplegada:** pendiente de conectar el proyecto a una cuenta Vercel. No se inventa una URL; al completar esa conexión, reemplaza esta línea por la URL real.
 
 ## Reglas destacadas
 
