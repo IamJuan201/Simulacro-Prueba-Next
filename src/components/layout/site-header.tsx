@@ -10,7 +10,7 @@ import { apiFetch } from "@/features/auth/api";
 type User = { id: string; fullName: string; role: "USER" | "ADMIN" };
 
 export function SiteHeader() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
@@ -31,7 +31,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <Link className="brand" href="/">Bid<span>Hub</span></Link>
-      <nav aria-label="Navegación principal">
+      <nav aria-label={t("auctions")}>
         <Link href="/auctions">{t("auctions")}</Link>
         {user && <Link href="/auctions/new">{t("sell")}</Link>}
         {user && <Link href="/my-auctions">{t("myAuctions")}</Link>}
@@ -40,7 +40,7 @@ export function SiteHeader() {
       </nav>
       <div className="header-actions">
         <LanguageSwitcher />
-        {user ? <><span className="user-greeting">Hola, {user.fullName.split(" ")[0]}</span><button className="button button-quiet" onClick={logout}>{t("signOut")}</button></> : <><Link className="button button-quiet" href="/login">{t("signIn")}</Link><Link className="button button-small" href="/register">{t("signUp")}</Link></>}
+        {user ? <><span className="user-greeting">{locale === "es" ? "Hola" : "Hi"}, {user.fullName.split(" ")[0]}</span><button className="button button-quiet" onClick={logout}>{t("signOut")}</button></> : <><Link className="button button-quiet" href="/login">{t("signIn")}</Link><Link className="button button-small" href="/register">{t("signUp")}</Link></>}
       </div>
     </header>
   );

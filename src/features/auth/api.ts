@@ -1,5 +1,20 @@
 "use client";
 
+let refreshInFlight: Promise<boolean> | null = null;
+
+function refreshSession(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch("/api/auth/refresh", {
+      method: "POST",
+      credentials: "same-origin",
+    }).then((response) => response.ok).finally(() => {
+      refreshInFlight = null;
+    });
+  }
+
+  return refreshInFlight;
+}
+
 export async function apiFetch(
   url: string,
   options: RequestInit = {},
@@ -14,12 +29,7 @@ export async function apiFetch(
     return response;
   }
 
-  const refresh = await fetch("/api/auth/refresh", {
-    method: "POST",
-    credentials: "same-origin",
-  });
-
-  if (!refresh.ok) {
+  if (!await refreshSession()) {
     return response;
   }
 

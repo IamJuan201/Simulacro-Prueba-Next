@@ -3,6 +3,7 @@ import "./globals.css";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
   title: { default: "BidHub | Colecciona. Ofrece. Gana.", template: "%s | BidHub" },
   description: "Subastas en línea para descubrir y coleccionar piezas únicas.",
 };

@@ -126,7 +126,7 @@ La CLI detecta la configuración en `prisma7.config.ts`; su propiedad `migration
 | `(private)` | `/my-auctions`, `/my-bids`, `/auctions/new`, `/auctions/[id]/edit` | `src/app/(private)` y `src/features/dashboard`, `src/features/auctions/auction-form.tsx`. |
 | `(admin)` | `/admin/auctions`, `/admin/categories` | `src/app/(admin)` y `src/features/admin`. |
 
-`src/app/layout.tsx` es el root layout. La home conserva un shell prerenderizado y deja los datos de subastas en streaming bajo `Suspense`; catálogo y detalle transmiten datos de base; dashboards consultan la API desde el cliente. `next/image` usa una ilustración local como fallback en `public/items/collectible.svg`.
+`src/app/layout.tsx` es el root layout. La home no consulta la base y se genera estática (SSG); catálogo y detalle consultan datos al solicitarse y los transmiten bajo `Suspense`; dashboards consultan la API desde el cliente (CSR). `next/image` usa una ilustración local como fallback en `public/items/collectible.svg`.
 
 ### E. Reglas de negocio y sus comprobaciones
 
@@ -168,7 +168,7 @@ En este entorno, `npm test` falló dentro del sandbox con `uv_os_get_passwd retu
 | Migración inicial | Aplicada previamente | El usuario mostró en Supabase la fila `init` en `_prisma_migrations` y las tablas. |
 | Migración de seguimiento | Preparada, falta aplicar | `prisma/migrations/20261026160000_auth_audit_and_rate_limit/migration.sql`. Añade `Auction.cancelledById`, tabla e índice de rate limit, activa RLS en seis tablas. El revisor automático bloqueó aplicarla directamente a Supabase; primero se debe revisar el plan/SQL y confirmar el entorno destino. |
 | Auth y APIs | Implementado en código; DB pendiente de migración | Hash scrypt, access/refresh, cookies, registro/login/refresh/logout/me; endpoints de subastas, ofertas, categorías, panel y admin. El rate limit necesita la tabla nueva. |
-| UI por route groups | Implementado | Home, catálogo, detalle, auth, paneles, forms, administración y cuenta regresiva. `next/image`, selector de idioma y estilos adaptables. |
+| UI por route groups | Implementado | Home estática, catálogo/detalle con datos al solicitarse, dashboards CSR, auth, forms, administración, cuenta regresiva y selector ES/EN en flujos principales. `next/image` y estilos adaptables. |
 | Seed, README, Docker y CI | Implementado | Archivos `prisma/seed.ts`, `README.md`, `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`. |
 | Chequeo estático | Pasa | `npx tsc --noEmit`, `npm run lint`, `npx prisma validate`, `npx prisma generate`. |
 | Prueba de regla | Pasa | `npm test`: cinco casos, 5 aprobados. Requirió correr fuera del sandbox por fallo de runtime. |

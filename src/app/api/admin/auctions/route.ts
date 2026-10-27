@@ -13,16 +13,20 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const statusValue = url.searchParams.get("status") ?? undefined;
   const status = Object.values(AuctionStatus).find((value) => value === statusValue);
+  const page = Number(url.searchParams.get("page") ?? 1);
 
   if (statusValue && !status) {
     return jsonError(400, "VALIDATION_ERROR", "El estado de subasta no es válido.");
+  }
+  if (!Number.isInteger(page) || page < 1 || page > 10_000) {
+    return jsonError(400, "VALIDATION_ERROR", "El número de página no es válido.");
   }
 
   try {
     const data = await listAuctions({
       status,
       search: url.searchParams.get("q")?.trim() || undefined,
-      page: Number(url.searchParams.get("page") ?? 1),
+      page,
       pageSize: 24,
     });
     return jsonSuccess(data);

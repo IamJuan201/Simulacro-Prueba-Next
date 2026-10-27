@@ -234,6 +234,16 @@ export async function placeBid(
 
   return prisma.$transaction(async (transaction) => {
     await lockAuction(transaction, auctionId);
+    const replay = await transaction.bid.findUnique({
+      where: { idempotencyKey },
+    });
+    if (replay) {
+      if (replay.auctionId !== auctionId || replay.bidderId !== bidderId) {
+        throw new DomainError(409, "CONFLICT", "La clave de idempotencia ya fue utilizada.");
+      }
+      return { bid: replay, replayed: true };
+    }
+
     const now = new Date();
     const auction = await transaction.auction.findUnique({
       where: { id: auctionId },

@@ -100,6 +100,10 @@ Para detenerlo: `docker compose down`. También puedes ejecutar `docker build -t
 - `/admin/auctions` y `/admin/categories` requieren rol ADMIN.
 - `/api/auth/*`, `/api/auctions/*`, `/api/categories/*`, `/api/me/*` y `/api/admin/*` son los route handlers. Cada handler aplica sus propios permisos.
 
+## Renderizado e idiomas
+
+La portada es estática (SSG), catálogo y detalle resuelven datos al solicitarse y transmiten el contenido con Suspense, y los paneles personales/admin cargan sus datos desde el cliente (CSR). El selector ES/EN traduce navegación, portada, autenticación, catálogo, formularios, detalle, dashboards y administración; los títulos/descripciones escritos por usuarios conservan el idioma en que fueron publicados.
+
 ## Estructura del proyecto
 
 ```text

@@ -22,6 +22,9 @@ export async function GET(request: Request) {
   if (!Number.isInteger(pageValue) || pageValue < 1 || pageValue > 10_000) {
     return jsonError(400, "VALIDATION_ERROR", "El número de página no es válido.");
   }
+  if (search && search.length > 120) {
+    return jsonError(400, "VALIDATION_ERROR", "La búsqueda no puede superar 120 caracteres.");
+  }
 
   if (categoryId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(categoryId)) {
     return jsonError(400, "VALIDATION_ERROR", "La categoría no es válida.");
