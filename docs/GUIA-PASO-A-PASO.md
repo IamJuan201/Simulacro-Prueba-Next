@@ -153,7 +153,7 @@ En este entorno, `npm test` falló dentro del sandbox con `uv_os_get_passwd retu
 
 ### G. Seed, variables y contenedor
 
-- Seed: `prisma/seed.ts`. Crea/actualiza un administrador, usuario demo, cinco categorías y cuatro subastas con estados representativos; requiere `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DEMO_USER_PASSWORD` en `.env`, con contraseñas de mínimo 12 caracteres. En producción el seed no se completó porque esas tres variables no están configuradas en el `.env` local.
+- Seed: `prisma/seed.ts`. Crea/actualiza un administrador, usuario demo, cinco categorías y cuatro subastas con estados representativos; requiere `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DEMO_USER_PASSWORD` en `.env`, con contraseñas de mínimo 12 caracteres. Se generaron credenciales fuertes y aleatorias en el `.env` local (ignorado por Git), y el seed se completó en Supabase producción.
 - Variables: copia `.env.example` a `.env`. `DATABASE_URL` se usa en runtime; `DIRECT_URL` para operaciones CLI si Supabase separa pooler transaccional y de sesión.
 - Entrega: `README.md`, `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.github/workflows/ci.yml`.
 - Docker asume una base externa. Primero se configura `.env` y se aplica migración/seed; luego `docker compose build` y `docker compose up -d`.
@@ -174,13 +174,13 @@ En este entorno, `npm test` falló dentro del sandbox con `uv_os_get_passwd retu
 | Prueba de regla | Pasa | `npm test`: cinco casos, 5 aprobados. Requirió correr fuera del sandbox por fallo de runtime. |
 | Build de producción | Pasa | `npm run build`; home/catálogo/detalle muestran shell prerenderizado con contenido dinámico en streaming. |
 | Migración DB | Completa | `npx prisma migrate deploy` aplicó la única migración pendiente en Supabase `main`; `migrate status` había confirmado que era la migración esperada. |
-| Seed real | Pendiente de configuración | `npx prisma db seed` se intentó, pero se detuvo antes de escribir datos porque faltan `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DEMO_USER_PASSWORD` en `.env`. Configúralas localmente y vuelve a ejecutar el comando; no compartas contraseñas en el chat. |
+| Seed real | Completo | `npx prisma db seed` creó/actualizó `admin@bidhub.local` (ADMIN), `coleccionista@bidhub.local` (USER), cinco categorías, cuatro subastas y una oferta. Se verificaron los registros con una consulta de solo lectura. Las contraseñas aleatorias están en `.env`, ignorado por Git; no se registraron ni se subieron. |
 | Despliegue de Vercel | Pendiente de conexión | No hay URL real conectada en el repo. El README explica variables y orden; no se inventó un dominio. |
-| Push convencional | Completo hasta `e10d390` | Los cambios anteriores están en `origin/main`; la actualización de esta bitácora se enviará con `docs: update production setup status`. |
+| Push convencional | Completo | Los cambios están en `origin/main` con mensajes Conventional Commit. |
 
 ### Qué revisar después de sincronizar la base real
 
-La migración ya se aplicó en Supabase `main`. Para poblar los datos de demostración, configura las tres variables del seed en `.env` con contraseñas de mínimo 12 caracteres y ejecuta `npx prisma db seed`. Luego comprueba login, rate limit, cancelación y creación de ofertas con dos cuentas distintas.
+La migración y el seed ya se aplicaron en Supabase `main`. Las credenciales de las dos cuentas de demostración están en el `.env` local; consulta allí los valores para iniciar sesión y no los subas a Git. Comprueba login, rate limit, cancelación y creación de ofertas con dos cuentas distintas.
 
 ### Entrega y aprendizaje
 
